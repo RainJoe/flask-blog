@@ -17,4 +17,7 @@ def create_app(config_name):
     db.init_app(app)
     security.init_app(app, user_datastore)
 
+    from .api import api as api_blueprint
+    app.register_blueprint(api_blueprint)
+    
     return app
