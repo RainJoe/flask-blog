@@ -1,9 +1,12 @@
+import os
+from io import BytesIO
 import unittest
 from app import create_app, db, user_datastore
 from base64 import b64encode
 import json
 from app.models import User, Role, Post, Category, Comment
 from flask_security.utils import hash_password, login_user
+import shutil
 
 
 class APITestCase(unittest.TestCase):
@@ -18,6 +21,8 @@ class APITestCase(unittest.TestCase):
         db.session.remove()
         db.drop_all()
         self.app_context.pop()
+        if os.path.exists(self.app.config['UPLOAD_FOLDER']):
+            shutil.rmtree(self.app.config['UPLOAD_FOLDER'])
 
     def login_as_admin(self):
         user = user_datastore.create_user(email='test@example.com', name='test', password=hash_password('123456'))
@@ -86,7 +91,7 @@ class APITestCase(unittest.TestCase):
                     'email': 'test@example.com', 
                     'password': '1',
                 }))
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.get_data(as_text=True))
         self.assertEqual(json_response['code'], 401.1)
         response = self.client.post(
@@ -96,7 +101,7 @@ class APITestCase(unittest.TestCase):
                     'email': 'test@edmple.com', 
                     'password': '123456',
                 }))
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.get_data(as_text=True))
         self.assertEqual(json_response['code'], 401.2)
     
@@ -227,3 +232,30 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.get_data(as_text=True))
         self.assertEqual(json_response['body'], 'ni hao')
+
+    def test_upload_file(self):
+        json_response = self.login_as_admin()
+        new_response = self.client.post(
+            '/posts',
+            headers={'Content-Type': 'application/json', 'Authorization': json_response['key']},
+            data=json.dumps({
+                    'title': 'test', 
+                    'desc': 'hello',
+                    'body': 'ni hao',
+                    'category': 'python'
+                })
+        )
+        response = self.client.post(
+            '/photos/1',
+            headers={'Content-Type': 'multipart/form-data', 'Authorization': json_response['key']},
+            data = dict(
+                file=(BytesIO(b'my file contents'), "test.png"),
+            )
+        )
+        self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.get_data(as_text=True))
+        self.assertEqual(json_response['url'], '/photos/test.png')
+        response = self.client.get(
+            '/photos/test.png',
+        )
+        self.assertEqual(response.status_code, 200)

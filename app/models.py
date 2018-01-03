@@ -32,8 +32,11 @@ class User(db.Model, UserMixin):
                             backref=db.backref('users', lazy='dynamic'))
     posts = db.relationship('Post', backref='author', lazy='dynamic')
     comments = db.relationship('Comment', backref='author', lazy='dynamic')
+    img = db.relationship('Image', uselist=False, backref='user')
 
     def avatar(self, size):
+        if self.img:
+            return self.img.url
         return 'http://www.gravatar.com/avatar/' + hashlib.md5(
             self.email.encode('utf-8')).hexdigest() + '?d=retro&s=' + str(size)
 
@@ -43,11 +46,11 @@ class Post(db.Model):
     title = db.Column(db.String(80))
     body = db.Column(db.Text)
     desc = db.Column(db.String(255))
-    img_url = db.Column(db.String(255))
     created_time = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
     comments = db.relationship('Comment', backref='post', lazy='dynamic')
+    img = db.relationship('Image', uselist=False, backref='post')
 
     def to_json(self):
         json_post = {
@@ -59,7 +62,7 @@ class Post(db.Model):
                                         'markdown.extensions.toc'])),
             'category': self.category.name,
             'desc': self.desc,
-            'img_url': self.img_url,
+            'img_url': self.img.url if self.img else '',
             'created_time': str(self.created_time),
             'author': self.author.name
         }
@@ -97,3 +100,10 @@ class Comment(db.Model):
             'author_avatar': self.author.avatar(5050505050)
         }
         return json_comment
+
+
+class Image(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    url = db.Column(db.String(255))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'))

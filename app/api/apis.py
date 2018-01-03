@@ -1,19 +1,29 @@
-from flask import request
+import os
+from flask import request, url_for, send_from_directory
 from . import api
 from flask_restful import Resource, Api, reqparse, abort
-from app.models import User, Post, Category, Comment
+from app.models import User, Post, Category, Comment, Image
 from flask_security.decorators import login_required, roles_required
 from flask_security.core import AnonymousUser, current_user
 from flask_security.utils import verify_password, logout_user, hash_password, login_user
 from app import db, user_datastore
+from werkzeug import secure_filename
+
+ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
 apis = Api(api)
 
 class Session(Resource):
+    """
+    This class is used to manage session state
+    """
     def get(self):
         pass
 
     def post(self):
+        """
+        This method is used to login
+        """
         email = request.json['email']
         password = request.json['password']
         user = User.query.filter_by(email=email).first()
@@ -22,12 +32,12 @@ class Session(Resource):
                 login_user(user)
                 return {'id': user.id, 'name': user.name, 'admin': user.has_role('admin'), 'key': user.get_auth_token()}
             else:
-                return {'code': 401.1, 'msg': 'incorrent password'}, 401
+                return {'code': 401.1, 'msg': 'incorrent password'}
         else:
-            return {'code': 401.2, 'msg': 'user not found'}, 401
+            return {'code': 401.2, 'msg': 'user not found'}
     def put(self):
         pass
-    
+
     @login_required
     def delete(self):
         logout_user()
@@ -37,7 +47,7 @@ class Session(Resource):
 class UserResource(Resource):
     def get(self, user_id):
         pass
-    
+
     def put(self, user_id):
         pass
 
@@ -46,7 +56,11 @@ class UserResource(Resource):
 
 
 class UserList(Resource):
+
     def post(self):
+        """
+        register 
+        """
         name = request.json['name']
         email = request.json['email']
         password = request.json['password']
@@ -62,16 +76,23 @@ class UserList(Resource):
         pass
 
 
+
 class Article(Resource):
     def get(self, post_id):
+        """
+        return a post
+        """
         post = Post.query.filter_by(id=post_id).first()
         if post:
             return post.to_json()
         else:
             abort(404, message="article {} doesn't exist".format(post_id))
-    
+
     @roles_required('admin')
     def put(self, post_id):
+        """
+        modify post
+        """
         post = Post.query.filter_by(id=post_id).first()
         post.title = request.json['title']
         category = Category.query.filter_by(name=request.json['category']).first()
@@ -82,7 +103,7 @@ class Article(Resource):
         post.desc = request.json['desc']
         db.session.commit()
         return post.to_json()
-    
+
     @roles_required('admin')
     def delete(self, post_id):
         post = Post.query.filter_by(id=post_id).first()
@@ -94,6 +115,9 @@ class Article(Resource):
 class ArticleList(Resource):
     @roles_required('admin')
     def post(self):
+        """
+        Add new post
+        """
         title = request.json['title']
         category = request.json['category']
         desc = request.json['desc']
@@ -109,9 +133,13 @@ class ArticleList(Resource):
     def get(self):
         return [p.to_json() for p in Post.query.all()]
 
+
 class CommentList(Resource):
     @login_required
     def post(self, article_id):
+        """
+        Add new comment
+        """
         body = request.json['body']
         user = current_user
         post = Post.query.filter_by(id=article_id).first()
@@ -119,10 +147,44 @@ class CommentList(Resource):
         db.session.add(comment)
         db.session.commit()
         return comment.to_json()
-    
+
     def get(self, article_id):
+        """
+        return comment list by article id
+        """
         post = Post.query.filter_by(id=article_id).first()
         return [comment.to_json() for comment in post.comments.all()]
+
+
+class Photo(Resource):
+
+    @staticmethod
+    def allowed_file(filename):
+        return '.' in filename and \
+           filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+
+    @roles_required('admin')
+    def post(self, article_id):
+        file = request.files['file']
+        if file and self.allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            if not os.path.exists(api.config['UPLOAD_FOLDER']):
+                os.makedirs(api.config['UPLOAD_FOLDER'])
+            file.save(os.path.join(api.config['UPLOAD_FOLDER'], filename))
+            img_url = url_for('api.photolist', filename=filename)
+            post = Post.query.filter_by(id=article_id).first()
+            img = Image(url=img_url, post=post)
+            db.session.commit()
+            return {'id': img.id, 'url': img.url, 'post_id': img.post_id}
+        else:
+            return {'code': 401, 'msg': 'save file error'}
+
+
+class PhotoList(Resource):
+    
+    def get(self, filename):
+        return send_from_directory(
+            api.config['UPLOAD_FOLDER'], filename)
 
 
 apis.add_resource(Session, '/sessions')
@@ -131,3 +193,5 @@ apis.add_resource(UserList, '/users')
 apis.add_resource(Article, '/posts/<post_id>')
 apis.add_resource(ArticleList, '/posts')
 apis.add_resource(CommentList, '/comments/<article_id>')
+apis.add_resource(Photo, '/photos/<article_id>')
+apis.add_resource(PhotoList, '/photos/<filename>')
