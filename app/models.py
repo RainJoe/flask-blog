@@ -1,7 +1,7 @@
 from app import db
 from flask_security import UserMixin, RoleMixin
 from datetime import datetime
-from flask import Markup
+from flask import Markup, current_app
 from markdown import markdown
 import hashlib
 
@@ -18,7 +18,7 @@ class Role(db.Model, RoleMixin):
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(80), unique=True)
+    name = db.Column(db.String(80))
     email = db.Column(db.String(80), unique=True)
     password = db.Column(db.String(255))
     last_login_at = db.Column(db.DateTime())
@@ -32,11 +32,8 @@ class User(db.Model, UserMixin):
                             backref=db.backref('users', lazy='dynamic'))
     posts = db.relationship('Post', backref='author', lazy='dynamic')
     comments = db.relationship('Comment', backref='author', lazy='dynamic')
-    img = db.relationship('Image', uselist=False, backref='user')
 
     def avatar(self, size):
-        if self.img:
-            return self.img.url
         return 'http://www.gravatar.com/avatar/' + hashlib.md5(
             self.email.encode('utf-8')).hexdigest() + '?d=retro&s=' + str(size)
 
@@ -62,7 +59,7 @@ class Post(db.Model):
                                         'markdown.extensions.toc'])),
             'category': self.category.name,
             'desc': self.desc,
-            'img_url': self.img.url if self.img else '',
+            'img': self.img.to_json() if self.img else '',
             'created_time': str(self.created_time),
             'author': self.author.name
         }
@@ -97,7 +94,7 @@ class Comment(db.Model):
             'created_time': str(self.created_time),
             'author_name': self.author.name,
             'post': self.post.title,
-            'author_avatar': self.author.avatar(5050505050)
+            'author_avatar': self.author.avatar(50)
         }
         return json_comment
 
@@ -105,5 +102,12 @@ class Comment(db.Model):
 class Image(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     url = db.Column(db.String(255))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
+
+    def to_json(self):
+        json_img = {
+            'id': self.id,
+            'url': self.url,
+            'filename': self.url.split('/')[-1]
+        }
+        return json_img

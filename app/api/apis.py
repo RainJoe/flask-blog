@@ -30,7 +30,11 @@ class Session(Resource):
         if user:
             if verify_password(password, user.password):
                 login_user(user)
-                return {'id': user.id, 'name': user.name, 'admin': user.has_role('admin'), 'key': user.get_auth_token()}
+                return {'id': user.id,
+                        'name': user.name,
+                        'admin': user.has_role('admin'),
+                        'key': user.get_auth_token(),
+                        'avatar': user.avatar(50)}
             else:
                 return {'code': 401.1, 'msg': 'incorrent password'}
         else:
@@ -59,7 +63,7 @@ class UserList(Resource):
 
     def post(self):
         """
-        register 
+        register
         """
         name = request.json['name']
         email = request.json['email']
@@ -70,10 +74,12 @@ class UserList(Resource):
             db.session.commit()
             return {'id': user.id, 'name': user.name, 'admin': user.has_role('admin')}
         except:
+            db.session.rollback()
             return {'code': 401.3, 'msg': 'email is already registered'}, 401
 
     def get(self):
-        pass
+        nums = User.query.count()
+        return {'amount': str(nums)}
 
 
 
@@ -95,10 +101,13 @@ class Article(Resource):
         """
         post = Post.query.filter_by(id=post_id).first()
         post.title = request.json['title']
+        img_id = request.json['img_id']
         category = Category.query.filter_by(name=request.json['category']).first()
+        img = Image.query.filter_by(id=img_id).first()
         if not category:
             category = Category(name=request.json['category'])
         post.category = category
+        post.img = img
         post.body = request.json['body']
         post.desc = request.json['desc']
         db.session.commit()
@@ -107,6 +116,12 @@ class Article(Resource):
     @roles_required('admin')
     def delete(self, post_id):
         post = Post.query.filter_by(id=post_id).first()
+        img = post.img
+        if img:
+            path = os.path.join(api.config['UPLOAD_FOLDER'], img.url.split('/')[-1])
+            if path:
+                os.remove(path)
+            db.session.delete(img)
         db.session.delete(post)
         db.session.commit()
         return '', 204
@@ -122,16 +137,19 @@ class ArticleList(Resource):
         category = request.json['category']
         desc = request.json['desc']
         body = request.json['body']
+        img_id = request.json['img_id']
+        img = Image.query.filter_by(id=img_id).first()
         c = Category.query.filter_by(name=category).first()
         if not c:
             c = Category(name=category)
-        p = Post(title=title, desc=desc, category=c, body=body, author=current_user)
+        p = Post(title=title, desc=desc, category=c, body=body, author=current_user, img=img)
         db.session.add(p)
         db.session.commit()
         return p.to_json()
 
     def get(self):
-        return [p.to_json() for p in Post.query.all()]
+        nums = Post.query.count()
+        return {'amount': str(nums), 'posts': [p.to_json() for p in Post.query.all()]}
 
 
 class CommentList(Resource):
@@ -156,7 +174,7 @@ class CommentList(Resource):
         return [comment.to_json() for comment in post.comments.all()]
 
 
-class Photo(Resource):
+class PhotoList(Resource):
 
     @staticmethod
     def allowed_file(filename):
@@ -164,27 +182,39 @@ class Photo(Resource):
            filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
     @roles_required('admin')
-    def post(self, article_id):
+    def post(self):
         file = request.files['file']
         if file and self.allowed_file(file.filename):
             filename = secure_filename(file.filename)
             if not os.path.exists(api.config['UPLOAD_FOLDER']):
                 os.makedirs(api.config['UPLOAD_FOLDER'])
             file.save(os.path.join(api.config['UPLOAD_FOLDER'], filename))
-            img_url = url_for('api.photolist', filename=filename)
-            post = Post.query.filter_by(id=article_id).first()
-            img = Image(url=img_url, post=post)
+            img_url = url_for('api.photo', filename=filename)
+            img = Image(url=img_url)
+            db.session.add(img)
             db.session.commit()
-            return {'id': img.id, 'url': img.url, 'post_id': img.post_id}
+            return {'id': img.id, 'url': img.url, 'filename': filename}
         else:
             return {'code': 401, 'msg': 'save file error'}
 
 
-class PhotoList(Resource):
-    
+class Photo(Resource):
+
     def get(self, filename):
         return send_from_directory(
             api.config['UPLOAD_FOLDER'], filename)
+
+    @roles_required('admin')
+    def delete(self, filename):
+        img_url = url_for('api.photo', filename=filename)
+        img = Image.query.filter_by(url=img_url).first()
+        if img:
+            os.remove(os.path.join(api.config['UPLOAD_FOLDER'], filename))
+            db.session.delete(img)
+            db.session.commit()
+            return '', 204
+        else:
+            return '', 205
 
 
 apis.add_resource(Session, '/sessions')
@@ -193,5 +223,5 @@ apis.add_resource(UserList, '/users')
 apis.add_resource(Article, '/posts/<post_id>')
 apis.add_resource(ArticleList, '/posts')
 apis.add_resource(CommentList, '/comments/<article_id>')
-apis.add_resource(Photo, '/photos/<article_id>')
-apis.add_resource(PhotoList, '/photos/<filename>')
+apis.add_resource(PhotoList, '/photos')
+apis.add_resource(Photo, '/photos/<filename>')
