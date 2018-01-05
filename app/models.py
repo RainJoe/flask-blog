@@ -61,7 +61,8 @@ class Post(db.Model):
             'desc': self.desc,
             'img': self.img.to_json() if self.img else '',
             'created_time': str(self.created_time),
-            'author': self.author.name
+            'author': self.author.name,
+            'author_avatar': self.author.avatar(50)
         }
         return json_post
 

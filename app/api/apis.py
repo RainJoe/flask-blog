@@ -119,7 +119,7 @@ class Article(Resource):
         img = post.img
         if img:
             path = os.path.join(api.config['UPLOAD_FOLDER'], img.url.split('/')[-1])
-            if path:
+            if os.path.exists(path):
                 os.remove(path)
             db.session.delete(img)
         db.session.delete(post)
