@@ -2,7 +2,7 @@
 
 #### 用到的框架及依赖
 1. Flask框架提供Restful风格的api
-2. Vue.js构建前端页面
+2. Vue.js构建前端页面, 前端代码在[blog-frotend](https://github.com/RainJoe/blog-frontend)
 3. 数据库使用MySQL
 
 #### 博客主要功能
