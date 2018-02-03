@@ -40,4 +40,5 @@ In [5]: user_datastore.add_role_to_user(user, role)
 python manage.py runserver
 ```
 打开 http://localhost:5000
+在 http://localhost:5000/#/login 进行登录
 进入后台管理页面 http://localhost:5000/admin 用创建的管理员账号登录
