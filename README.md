@@ -18,11 +18,9 @@ sudo pip install -r requirements.txt
 ```
 
 2. 修改``config.py``中的数据库连接地址
-
 将``'mysql+pymysql://root:123456@localhost:3306/flaskdemo?charset=utf8'``换成你的数据库连接地址
 
 3. 初始化数据库并添加管理员
-
 ```shell
 python manage.py shell
 ```
@@ -36,6 +34,7 @@ In [4]: from app import user_datastore
 In [5]: user_datastore.add_role_to_user(user, role)
 
 ```
+
 4. 让程序跑起来
 ```shell
 python manage.py runserver
