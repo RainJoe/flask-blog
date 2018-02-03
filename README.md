@@ -11,16 +11,16 @@
 3. 后台管理，权限控制
 
 ### 如何使用
-1. 安装依赖
+#### 安装依赖
 
 ```shell
 sudo pip install -r requirements.txt
 ```
 
-2. 修改``config.py``中的数据库连接地址
+#### 修改``config.py``中的数据库连接地址
 将``'mysql+pymysql://root:123456@localhost:3306/flaskdemo?charset=utf8'``换成你的数据库连接地址
 
-3. 初始化数据库并添加管理员
+#### 初始化数据库并添加管理员
 ```shell
 python manage.py shell
 ```
@@ -35,10 +35,10 @@ In [5]: user_datastore.add_role_to_user(user, role)
 
 ```
 
-4. 让程序跑起来
+#### 让程序跑起来
 ```shell
 python manage.py runserver
 ```
 打开 http://localhost:5000
 在 http://localhost:5000/#/login 进行登录
-进入后台管理页面 http://localhost:5000/admin 用创建的管理员账号登录
+进入后台管理页面 http://localhost:5000/#/admin 用创建的管理员账号登录
