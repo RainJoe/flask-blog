@@ -27,14 +27,17 @@ python manage.py shell
 进入python解释器后执行
 ```python
 
-In [1]: from app import user_datastore
+In [1]: db.create_all()
 
-In [2]: role = user_datastore.create_role(name='admin')
+In [2]: from app import user_datastore
 
-In [3]: user = user_datastore.create_user(name='yourname', email="email@example.com", password='123456')
+In [3]: role = user_datastore.create_role(name='admin')
 
-In [4]: user_datastore.add_role_to_user(user, role)
-Out[4]: True
+In [4]: user = user_datastore.create_user(name='yourname', email="email@example.com", password='123456')
+
+In [5]: user_datastore.add_role_to_user(user, role)
+
+In [6]: db.session.commit()
 
 
 ```
