@@ -27,11 +27,15 @@ python manage.py shell
 进入python解释器后执行
 ```python
 
-In [1]: db.create_all()
-In [2]: role = Role(name='admin')
-In [3]: user = User(name='yourname', email='youremail@example.com', password='123456')
-In [4]: from app import user_datastore
-In [5]: user_datastore.add_role_to_user(user, role)
+In [1]: from app import user_datastore
+
+In [2]: role = user_datastore.create_role(name='admin')
+
+In [3]: user = user_datastore.create_user(name='yourname', email="email@example.com", password='123456')
+
+In [4]: user_datastore.add_role_to_user(user, role)
+Out[4]: True
+
 
 ```
 
