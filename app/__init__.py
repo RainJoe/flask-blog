@@ -1,12 +1,13 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import Security, SQLAlchemyUserDatastore
+from flask_restful import Api
 from config import config
 
 db = SQLAlchemy()
 security = Security()
 
-from .models import User, Role
+from app.models import User, Role
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 
 def create_app(config_name):
@@ -16,11 +17,8 @@ def create_app(config_name):
 
     db.init_app(app)
     security.init_app(app, user_datastore)
-
-    from .api import api as api_blueprint
-    app.register_blueprint(api_blueprint)
-
-    from .main import main as main_blueprint
-    app.register_blueprint(main_blueprint)
+    
+    from app.resources import api as api_bluprint
+    app.register_blueprint(api_bluprint)
     
     return app

@@ -7,8 +7,10 @@ class Config:
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_RECORD_QUERIES = True
-    SECURITY_PASSWORD_SALT = 'ss'
+    SECURITY_PASSWORD_SALT = os.environ.get('SECURITY_PASSWORD_SALT') or '0a4d55a8d778e5022fab701977c5d840bbc486d0'
     UPLOAD_FOLDER = os.path.join(basedir, 'uploads')
+    ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+
 
     @staticmethod
     def init_app(app):
@@ -17,8 +19,8 @@ class Config:
 
 class TestingConfig(Config):
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
-        'sqlite://'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
+        'mysql+pymysql://root:123456@localhost:3306/flaskblog?charset=utf8'
     WTF_CSRF_ENABLED = False
     UPLOAD_FOLDER = os.path.join(basedir, 'uploads/test')
 
@@ -26,7 +28,7 @@ class TestingConfig(Config):
 class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
-        'mysql+pymysql://root:123456@localhost:3306/flaskdemo?charset=utf8'
+        'mysql+pymysql://root:123456@localhost:3306/flaskblog?charset=utf8'
 
 
 config = {
