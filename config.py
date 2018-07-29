@@ -31,8 +31,15 @@ class DevelopmentConfig(Config):
         'mysql+pymysql://root:123456@localhost:3306/flaskblog?charset=utf8'
 
 
+class ProductionConfig(Config):
+    DEBUG = False
+    SQLALCHEMY_DATABASE_URI = os.environ.get('PRO_DATABASE_URL') or \
+        'mysql+pymysql://root:123456@db:3306/flaskblog?charset=utf8'
+
+
 config = {
     'testing': TestingConfig,
     'development': DevelopmentConfig,
-    'default': DevelopmentConfig
+    'default': DevelopmentConfig,
+    'production': ProductionConfig
 }
