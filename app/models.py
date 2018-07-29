@@ -1,13 +1,13 @@
 from app import db
 from flask_security import UserMixin, RoleMixin
 from datetime import datetime
-from flask import Markup, current_app
+from flask import Markup
 from markdown import markdown
 import hashlib
 
 roles_users = db.Table('roles_users',
-        db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
-        db.Column('role_id', db.Integer(), db.ForeignKey('role.id')))
+                       db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
+                       db.Column('role_id', db.Integer(), db.ForeignKey('role.id')))
 
 
 class Role(db.Model, RoleMixin):
@@ -54,9 +54,9 @@ class Post(db.Model):
             'id': self.id,
             'title': self.title,
             'body': Markup(markdown(self.body, extensions=[
-                                        'markdown.extensions.fenced_code',
-                                        'markdown.extensions.tables',
-                                        'markdown.extensions.toc'])),
+                'markdown.extensions.fenced_code',
+                'markdown.extensions.tables',
+                'markdown.extensions.toc'])),
             'category': self.category.name,
             'desc': self.desc,
             'img': self.img.to_json() if self.img else '',

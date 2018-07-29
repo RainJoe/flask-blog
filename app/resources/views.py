@@ -4,7 +4,6 @@
    This module provide some api
 """
 
-
 import os
 from flask import request, url_for, send_from_directory, current_app
 from flask_restful import Resource, Api, abort
@@ -16,7 +15,6 @@ from app.models import User, Post, Category, Comment, Image
 from app import db, user_datastore
 from . import api
 
-
 resources = Api(api)
 
 
@@ -24,6 +22,7 @@ class Session(Resource):
     """
     This class is used to manage session state
     """
+
     def get(self):
         pass
 
@@ -46,6 +45,7 @@ class Session(Resource):
                 return {'code': 401.1, 'msg': 'incorrent password'}
         else:
             return {'code': 401.2, 'msg': 'user not found'}
+
     def put(self):
         pass
 
@@ -87,7 +87,6 @@ class UserList(Resource):
     def get(self):
         nums = User.query.count()
         return {'amount': str(nums)}
-
 
 
 class Article(Resource):
@@ -196,7 +195,7 @@ class PhotoList(Resource):
         @parma: filename
         """
         return '.' in filename and \
-           filename.rsplit('.', 1)[1] in current_app.config['ALLOWED_EXTENSIONS']
+               filename.rsplit('.', 1)[1] in current_app.config['ALLOWED_EXTENSIONS']
 
     @roles_required('admin')
     def post(self):
@@ -235,6 +234,7 @@ class Photo(Resource):
             return '', 204
         else:
             return '', 205
+
 
 resources.add_resource(Session, '/sessions')
 resources.add_resource(UserResource, '/users/<user_id>')

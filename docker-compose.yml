@@ -18,7 +18,6 @@ services:
     links:
       - web
     volumes:
-      - /etc/localtime:/etc/localtime
       - ./frontend/dist:/usr/share/nginx/html
       - ./frontend/conf:/etc/nginx/conf.d
       - ./frontend/log:/var/log/nginx
