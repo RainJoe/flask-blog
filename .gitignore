@@ -2,4 +2,4 @@
 *.py[cod]
 .vscode
 uploads
-./data
+data
