@@ -6,9 +6,8 @@ ENV FLASK_USER admin
 ENV FLASK_USER_EMAIL 'email@example.com'
 ENV FLASK_USER_PASSWORD '123456'
 
-RUN adduser --disabled-login blog
+RUN useradd -ms /bin/bash blog 
 USER blog
-
 WORKDIR /home/blog
 
 COPY .pip .pip

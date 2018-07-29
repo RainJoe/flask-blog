@@ -19,6 +19,6 @@ def create_app(config_name):
     security.init_app(app, user_datastore)
     
     from app.resources import api as api_bluprint
-    app.register_blueprint(api_bluprint)
+    app.register_blueprint(api_bluprint, url_prefix='/api')
     
     return app

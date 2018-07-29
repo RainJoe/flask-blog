@@ -2,17 +2,21 @@ version: "3"
 services:
   web:
     build: .
+    links:
+      - db
   db:
     image: "mysql:5.7"
     environment:
-      - MYSQL_ROOT_PASSWORD='123456'
-      - MYSQL_DATABASE='flaskblog'
+      - MYSQL_ROOT_PASSWORD=123456
+      - MYSQL_DATABASE=flaskblog
     volumes:
-      - ./db:/var/lib/mysql
+      - ./data:/var/lib/mysql
   frontend:
     image: "nginx"
     ports:
       - "8080:80"
+    links:
+      - web
     volumes:
       - /etc/localtime:/etc/localtime
       - ./frontend/dist:/usr/share/nginx/html
