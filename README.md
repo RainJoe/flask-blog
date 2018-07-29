@@ -16,5 +16,5 @@
 3. 修改docker-compose.yml中的MYSQL_ROOT_PASSWORD为你的数据库密码
 4. 修改config.py 中ProductionConfig的数据库密码为docker-compose.yml中设置的密码
 5. 在docker-compose.yml所在的文件夹下运行 ``docker-compose up --build -d``
-6. 在浏览器中打开http://127.0.0.1:8080/login进行登录
+6. 在浏览器中打开http://127.0.0.1:8080/login
 
