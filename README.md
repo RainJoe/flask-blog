@@ -11,10 +11,10 @@
 3. 后台管理，权限控制
 
 ### 如何使用
-1. 安装docker
-2. 修改Dockerfile中的FLASK_USER, FLASK_USER_EMAIL, FLASK_USER_PASSWORD为你的用户名，邮箱，密码
-3. 修改docker-compose.yml中的MYSQL_ROOT_PASSWORD为你的数据库密码
-4. 修改config.py 中ProductionConfig的数据库密码为docker-compose.yml中设置的密码
-5. 在docker-compose.yml所在的文件夹下运行 ``docker-compose up --build -d``
+1. 安装``docker``, ``docker-compose``
+2. 修改``Dockerfile``中的``FLASK_USER``, ``FLASK_USER_EMAIL``, ``FLASK_USER_PASSWORD``为你的用户名，邮箱，密码
+3. 修改``docker-compose.yml``中的``MYSQL_ROOT_PASSWORD``为你的数据库密码
+4. 修改``config.py`` 中``ProductionConfig``的数据库密码为``docker-compose.yml``中设置的密码
+5. 在``docker-compose.yml``所在的文件夹下运行 ``docker-compose up --build -d``
 6. 在浏览器中打开http://127.0.0.1:8080/login
 
