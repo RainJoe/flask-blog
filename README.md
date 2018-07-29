@@ -11,41 +11,10 @@
 3. 后台管理，权限控制
 
 ### 如何使用
-#### 安装依赖
+1. 安装docker
+2. 修改Dockerfile中的FLASK_USER, FLASK_USER_EMAIL, FLASK_USER_PASSWORD为你的用户名，邮箱，密码
+3. 修改docker-compose.yml中的MYSQL_ROOT_PASSWORD为你的数据库密码
+4. 修改config.py 中ProductionConfig的数据库密码为docker-compose.yml中设置的密码
+5. 在docker-compose.yml所在的文件夹下运行 ``docker-compose up --build -d``
+6. 在浏览器中打开http://127.0.0.1:8080/login进行登录
 
-```shell
-sudo pip install -r requirements.txt
-```
-
-#### 修改``config.py``中的数据库连接地址
-将``'mysql+pymysql://root:123456@localhost:3306/flaskdemo?charset=utf8'``换成你的数据库连接地址
-
-#### 初始化数据库并添加管理员
-```shell
-python manage.py shell
-```
-进入python解释器后执行
-```python
-
-In [1]: db.create_all()
-
-In [2]: from app import user_datastore
-
-In [3]: role = user_datastore.create_role(name='admin')
-
-In [4]: user = user_datastore.create_user(name='yourname', email="email@example.com", password='123456')
-
-In [5]: user_datastore.add_role_to_user(user, role)
-
-In [6]: db.session.commit()
-
-
-```
-
-#### 让程序跑起来
-```shell
-python manage.py runserver
-```
-打开 http://localhost:5000
-在 http://localhost:5000/#/login 进行登录
-进入后台管理页面 http://localhost:5000/#/admin 用创建的管理员账号登录
