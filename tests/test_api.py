@@ -41,7 +41,7 @@ class APITestCase(unittest.TestCase):
         json_response = self.login_as_admin()
         response = self.client.post(
             '/api/photos',
-            headers={'Content-Type': 'multipart/form-data', 'Authorization': json_response['key']},
+            headers={'Content-Type': 'multipart/form-data', 'Authorization': json_response['token']},
             data = dict(
                 file=(BytesIO(b'my file contents'), "test.png"),
             )
@@ -54,7 +54,7 @@ class APITestCase(unittest.TestCase):
         img_id = new_response['id']
         response = self.client.post(
             '/api/posts',
-            headers={'Content-Type': 'application/json', 'Authorization': json_response['key']},
+            headers={'Content-Type': 'application/json', 'Authorization': json_response['token']},
             data=json.dumps({
                     'title': 'test',
                     'desc': 'hello',
@@ -89,9 +89,7 @@ class APITestCase(unittest.TestCase):
                     'name': 'test',
                     'password': '123456'
                 }))
-        self.assertEqual(response.status_code, 401)
-        json_response = json.loads(response.get_data(as_text=True))
-        self.assertEqual(json_response['code'], 401.3)
+        self.assertEqual(response.status_code, 409)
 
     def test_login_success(self):
         user_datastore.create_user(email='test@example.com', name='test', password=hash_password('123456'))
@@ -117,9 +115,7 @@ class APITestCase(unittest.TestCase):
                     'email': 'test@example.com',
                     'password': '1',
                 }))
-        self.assertEqual(response.status_code, 200)
-        json_response = json.loads(response.get_data(as_text=True))
-        self.assertEqual(json_response['code'], 401.1)
+        self.assertEqual(response.status_code, 411)
         response = self.client.post(
             '/api/sessions',
             headers={'Content-Type': 'application/json'},
@@ -127,9 +123,7 @@ class APITestCase(unittest.TestCase):
                     'email': 'test@edmple.com',
                     'password': '123456',
                 }))
-        self.assertEqual(response.status_code, 200)
-        json_response = json.loads(response.get_data(as_text=True))
-        self.assertEqual(json_response['code'], 401.2)
+        self.assertEqual(response.status_code, 410)
 
     def test_logout(self):
         user_datastore.create_user(email='test@example.com', name='test', password=hash_password('123456'))
@@ -145,7 +139,7 @@ class APITestCase(unittest.TestCase):
 
         response = self.client.delete(
             '/api/sessions',
-            headers={'Content-Type': 'application/json', 'Authorization': json_response['key']},
+            headers={'Content-Type': 'application/json', 'Authorization': json_response['token']},
         )
         self.assertEqual(response.status_code, 204)
 
@@ -159,7 +153,7 @@ class APITestCase(unittest.TestCase):
         new_response, json_response = self.add_post()
         response = self.client.put(
             '/api/posts/{}'.format(json.loads(new_response.get_data(as_text=True))['id']),
-            headers={'Content-Type': 'application/json', 'Authorization': json_response['key']},
+            headers={'Content-Type': 'application/json', 'Authorization': json_response['token']},
             data=json.dumps({
                     'title': 'test2',
                     'desc': 'hello',
@@ -186,13 +180,13 @@ class APITestCase(unittest.TestCase):
             '/api/posts/454353',
             headers={'Content-Type': 'application/json'}
         )
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 410)
 
     def test_delete_article(self):
         new_response, json_response = self.add_post()
         response = self.client.delete(
             '/api/posts/{}'.format(json.loads(new_response.get_data(as_text=True))['id']),
-            headers={'Content-Type': 'application/json', 'Authorization': json_response['key']}
+            headers={'Content-Type': 'application/json', 'Authorization': json_response['token']}
         )
         self.assertEqual(response.status_code, 204)
         img = json.loads(new_response.get_data(as_text=True))['img']
@@ -203,7 +197,7 @@ class APITestCase(unittest.TestCase):
         new_response, json_response = self.add_post()
         response = self.client.post(
             '/api/comments/{}'.format(json.loads(new_response.get_data(as_text=True))['id']),
-            headers={'Content-Type': 'application/json', 'Authorization': json_response['key']},
+            headers={'Content-Type': 'application/json', 'Authorization': json_response['token']},
             data=json.dumps({
                     'body': 'ni hao',
                 })
@@ -227,6 +221,6 @@ class APITestCase(unittest.TestCase):
         new_response = json.loads(response.get_data(as_text=True))
         response = self.client.delete(
             '/api/photos/{}'.format(new_response['filename']),
-            headers={'Content-Type': 'application/json', 'Authorization': json_response['key']},
+            headers={'Content-Type': 'application/json', 'Authorization': json_response['token']},
         )
-        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.status_code, 201)

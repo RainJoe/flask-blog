@@ -49,8 +49,8 @@ class Post(db.Model):
     comments = db.relationship('Comment', backref='post', lazy='dynamic')
     img = db.relationship('Image', uselist=False, backref='post')
 
-    def to_json(self):
-        json_post = {
+    def to_dict(self):
+        return {
             'id': self.id,
             'title': self.title,
             'body': Markup(markdown(self.body, extensions=[
@@ -59,12 +59,11 @@ class Post(db.Model):
                 'markdown.extensions.toc'])),
             'category': self.category.name,
             'desc': self.desc,
-            'img': self.img.to_json() if self.img else '',
+            'img': self.img.to_dict() if self.img else '',
             'created_time': str(self.created_time),
             'author': self.author.name,
             'author_avatar': self.author.avatar(50)
         }
-        return json_post
 
 
 class Category(db.Model):
@@ -72,13 +71,12 @@ class Category(db.Model):
     name = db.Column(db.String(80), unique=True)
     posts = db.relationship('Post', backref='category', lazy='dynamic')
 
-    def to_json(self):
-        json_category = {
+    def to_dict(self):
+        return {
             'id': self.id,
             'name': self.name,
             'posts': [p.to_json() for p in self.posts.all()]
         }
-        return json_category
 
 
 class Comment(db.Model):
@@ -88,8 +86,8 @@ class Comment(db.Model):
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
 
-    def to_json(self):
-        json_comment = {
+    def to_dict(self):
+        return {
             'id': self.id,
             'body': self.body,
             'created_time': str(self.created_time),
@@ -97,7 +95,6 @@ class Comment(db.Model):
             'post': self.post.title,
             'author_avatar': self.author.avatar(50)
         }
-        return json_comment
 
 
 class Image(db.Model):
@@ -105,10 +102,9 @@ class Image(db.Model):
     url = db.Column(db.String(255))
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
 
-    def to_json(self):
-        json_img = {
+    def to_dict(self):
+        return {
             'id': self.id,
             'url': self.url,
             'filename': self.url.split('/')[-1]
         }
-        return json_img
