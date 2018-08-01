@@ -82,7 +82,6 @@ class PasswordWrongError(HTTPException):
     pass
 
 
-
 class Forbidden(HTTPException):
     pass
 
