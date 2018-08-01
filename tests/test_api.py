@@ -115,7 +115,7 @@ class APITestCase(unittest.TestCase):
                     'email': 'test@example.com',
                     'password': '1',
                 }))
-        self.assertEqual(response.status_code, 411)
+        self.assertEqual(response.status_code, 401)
         response = self.client.post(
             '/api/sessions',
             headers={'Content-Type': 'application/json'},
@@ -123,7 +123,7 @@ class APITestCase(unittest.TestCase):
                     'email': 'test@edmple.com',
                     'password': '123456',
                 }))
-        self.assertEqual(response.status_code, 410)
+        self.assertEqual(response.status_code, 404)
 
     def test_logout(self):
         user_datastore.create_user(email='test@example.com', name='test', password=hash_password('123456'))
@@ -141,7 +141,7 @@ class APITestCase(unittest.TestCase):
             '/api/sessions',
             headers={'Content-Type': 'application/json', 'Authorization': json_response['token']},
         )
-        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.status_code, 201)
 
     def test_add_article(self):
         response, _ = self.add_post()
@@ -180,7 +180,7 @@ class APITestCase(unittest.TestCase):
             '/api/posts/454353',
             headers={'Content-Type': 'application/json'}
         )
-        self.assertEqual(response.status_code, 410)
+        self.assertEqual(response.status_code, 404)
 
     def test_delete_article(self):
         new_response, json_response = self.add_post()
@@ -188,7 +188,7 @@ class APITestCase(unittest.TestCase):
             '/api/posts/{}'.format(json.loads(new_response.get_data(as_text=True))['id']),
             headers={'Content-Type': 'application/json', 'Authorization': json_response['token']}
         )
-        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.status_code, 201)
         img = json.loads(new_response.get_data(as_text=True))['img']
         path = os.path.join(self.app.config['UPLOAD_FOLDER'], img['filename'])
         self.assertFalse(os.path.exists(path))

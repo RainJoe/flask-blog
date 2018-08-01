@@ -6,7 +6,7 @@
 
 import os
 from flask import request, url_for, send_from_directory, current_app
-from flask_restful import Resource, Api, marshal_with, fields, reqparse, HTTPException
+from flask_restful import Resource, Api, marshal_with
 from flask_security.decorators import login_required, roles_required
 from flask_security.core import current_user
 from flask_security.utils import verify_password, logout_user, hash_password, login_user
@@ -14,56 +14,12 @@ from werkzeug.utils import secure_filename
 from app.models import User, Post, Category, Comment, Image
 from app import db, user_datastore
 from . import api
-
-errors = {
-    'UserAlreadyExistsError': {
-        'message': "A user with that username or email already exists.",
-        'status': 409,
-    },
-    'ResourceDoesNotExist': {
-        'message': "A resource with that ID no longer exists.",
-        'status': 410,
-    },
-    'PasswordWrongError': {
-        'message': "Password dose not match.",
-        'status': 411,
-    },
-    'UpdateResourceError': {
-        'message': "Updating resource failed.",
-        'status': 412,
-    },
-}
-
-
-class ResourceDoesNotExist(HTTPException):
-    pass
-
-
-class UserAlreadyExistsError(HTTPException):
-    pass
-
-
-class PasswordWrongError(HTTPException):
-    pass
-
-
-class UpdateResourceError(HTTPException):
-    pass
-
+from .errors import errors, ResourceNotFound, PasswordWrongError, Conflict
+from .args import session_args, user_args, article_args, comment_args
+from .output import session_fields, user_fields, user_list_fields, img_fields, article_list_fields, article_fields, \
+    comment_fields
 
 resources = Api(api, errors=errors)
-
-session_args = reqparse.RequestParser()
-session_args.add_argument("email", type=str)
-session_args.add_argument('password', type=str)
-
-session_fields = {
-    'id': fields.Integer,
-    'name': fields.String,
-    'is_admin': fields.Boolean,
-    'token': fields.String,
-    'avatar': fields.String,
-}
 
 
 class Session(Resource):
@@ -79,7 +35,7 @@ class Session(Resource):
         args = session_args.parse_args()
         user = User.query.filter_by(email=args['email']).first()
         if not user:
-            raise ResourceDoesNotExist
+            raise ResourceNotFound
 
         if not verify_password(args['password'], user.password):
             raise PasswordWrongError
@@ -95,25 +51,7 @@ class Session(Resource):
     @login_required
     def delete(self):
         logout_user()
-        return "", 204
-
-
-user_args = reqparse.RequestParser()
-user_args.add_argument('name', fields.String)
-user_args.add_argument('email', fields.String)
-user_args.add_argument('password', fields.String)
-
-
-user_fields = {
-    'id': fields.String,
-    'name': fields.String,
-}
-
-
-user_list_fields = {
-    'users': fields.List(fields.Nested(user_fields)),
-    'count': fields.Integer,
-}
+        return "", 201
 
 
 class UserList(Resource):
@@ -131,7 +69,7 @@ class UserList(Resource):
             return user
         except Exception as e:
             db.session.rollback()
-            raise UserAlreadyExistsError
+            raise Conflict
 
     @roles_required('admin')
     @marshal_with(user_list_fields)
@@ -139,37 +77,6 @@ class UserList(Resource):
         users = User.query.all()
         count = User.query.count()
         return {'users': users, 'count': count}
-
-
-article_args = reqparse.RequestParser()
-article_args.add_argument('title', fields.String)
-article_args.add_argument('desc', fields.String)
-article_args.add_argument('img_id', fields.Integer)
-article_args.add_argument('category', fields.String)
-article_args.add_argument('body', fields.String)
-
-img_fields = {
-    'id': fields.Integer,
-    'url': fields.String,
-    'filename': fields.String,
-}
-
-article_fields = {
-    'id': fields.Integer,
-    'title': fields.String,
-    'body': fields.String,
-    'category': fields.String,
-    'desc': fields.String,
-    'img': fields.Nested(img_fields),
-    'created_time': fields.String,
-    'author': fields.String,
-    'author_avatar': fields.String
-}
-
-article_list_fields = {
-    'count': fields.Integer,
-    'posts': fields.List(fields.Nested(article_fields))
-}
 
 
 class Article(Resource):
@@ -181,7 +88,7 @@ class Article(Resource):
         """
         post = Post.query.filter_by(id=post_id).first()
         if not post:
-            raise ResourceDoesNotExist
+            raise ResourceNotFound
         return post.to_dict()
 
     @roles_required('admin')
@@ -194,7 +101,7 @@ class Article(Resource):
         args = article_args.parse_args()
         post = Post.query.filter_by(id=post_id).first()
         if not post:
-            raise ResourceDoesNotExist
+            raise ResourceNotFound
 
         post.title = args['title']
         img_id = args['img_id']
@@ -211,7 +118,7 @@ class Article(Resource):
             db.session.commit()
         except Exception as e:
             db.session.rollback()
-            raise UpdateResourceError
+            raise Conflict
         return post.to_dict()
 
     @roles_required('admin')
@@ -229,7 +136,7 @@ class Article(Resource):
             db.session.delete(img)
         db.session.delete(post)
         db.session.commit()
-        return "", 204
+        return "", 201
 
 
 class ArticleList(Resource):
@@ -244,13 +151,14 @@ class ArticleList(Resource):
         category = Category.query.filter_by(name=args['category']).first()
         if not category:
             category = Category(name=args['category'])
-        p = Post(title=args['title'], desc=args['desc'], category=category, body=args['body'], author=current_user, img=img)
+        p = Post(title=args['title'], desc=args['desc'], category=category, body=args['body'], author=current_user,
+                 img=img)
         try:
             db.session.add(p)
             db.session.commit()
         except Exception as e:
             db.session.rollback()
-            raise UpdateResourceError
+            raise Conflict
         return p.to_dict()
 
     @marshal_with(article_list_fields)
@@ -258,20 +166,6 @@ class ArticleList(Resource):
         posts = Post.query.all()
         count = Post.query.count()
         return {'count': count, 'posts': posts}
-
-
-comment_args = reqparse.RequestParser()
-comment_args.add_argument('body', fields.String)
-
-
-comment_fields = {
-    'id': fields.String,
-    'body': fields.String,
-    'created_time': fields.String,
-    'author_name': fields.String,
-    'post': fields.String,
-    'author_avatar': fields.String
-}
 
 
 class CommentList(Resource):
@@ -290,7 +184,7 @@ class CommentList(Resource):
             db.session.commit()
         except Exception as e:
             db.session.rollback()
-            raise UpdateResourceError
+            raise Conflict
         return comment.to_dict()
 
     @marshal_with(comment_fields)
@@ -332,7 +226,7 @@ class PhotoList(Resource):
             db.session.commit()
             return img.to_dict()
         else:
-            raise UpdateResourceError
+            raise Conflict
 
 
 class Photo(Resource):
@@ -351,7 +245,7 @@ class Photo(Resource):
             db.session.commit()
             return '', 201
         else:
-            raise ResourceDoesNotExist
+            raise Conflict
 
 
 resources.add_resource(Session, '/sessions')

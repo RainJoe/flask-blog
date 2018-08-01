@@ -5,3 +5,4 @@
 uploads
 data
 venv
+*.log
