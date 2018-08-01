@@ -4,6 +4,7 @@
 1. Flask框架提供Restful风格的api
 2. Vue.js构建前端页面, 前端代码在[blog-frotend](https://github.com/RainJoe/blog-frontend)
 3. 数据库使用MySQL
+4. 使用Docker部署
 
 #### 博客主要功能
 1. 用户登录注册
