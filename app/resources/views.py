@@ -89,6 +89,7 @@ class Article(Resource):
         post = Post.query.filter_by(id=post_id).first()
         if not post:
             raise ResourceNotFound
+
         return post.to_dict()
 
     @roles_required('admin')
@@ -165,7 +166,7 @@ class ArticleList(Resource):
     def get(self):
         posts = Post.query.all()
         count = Post.query.count()
-        return {'count': count, 'posts': posts}
+        return {'count': count, 'posts': [p.to_dict() for p in posts]}
 
 
 class CommentList(Resource):
@@ -194,7 +195,7 @@ class CommentList(Resource):
         """
         post = Post.query.filter_by(id=article_id).first()
         comments = post.comments.all()
-        return comments
+        return [c.to_dict() for c in comments]
 
 
 class PhotoList(Resource):
