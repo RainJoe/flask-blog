@@ -42,7 +42,7 @@ class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(80))
     body = db.Column(db.Text)
-    desc = db.Column(db.String(255))
+    description = db.Column(db.String(255))
     created_time = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
@@ -58,7 +58,7 @@ class Post(db.Model):
                 'markdown.extensions.tables',
                 'markdown.extensions.toc'])),
             'category': self.category.name,
-            'desc': self.desc,
+            'desc': self.description,
             'img': self.img.to_dict() if self.img else '',
             'created_time': str(self.created_time),
             'author': self.author.name,

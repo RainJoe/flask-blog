@@ -114,7 +114,7 @@ class Article(Resource):
             post.category = category
             post.img = img
             post.body = request.json['body']
-            post.desc = request.json['desc']
+            post.description = request.json['desc']
             db.session.add(post)
             db.session.commit()
         except Exception as e:
@@ -152,7 +152,7 @@ class ArticleList(Resource):
         category = Category.query.filter_by(name=args['category']).first()
         if not category:
             category = Category(name=args['category'])
-        p = Post(title=args['title'], desc=args['desc'], category=category, body=args['body'], author=current_user,
+        p = Post(title=args['title'], description=args['desc'], category=category, body=args['body'], author=current_user,
                  img=img)
         try:
             db.session.add(p)
