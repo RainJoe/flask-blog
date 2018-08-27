@@ -5,7 +5,8 @@
 """
 
 import os
-from flask import request, url_for, send_from_directory, current_app
+from flask import request, url_for, send_from_directory, current_app, jsonify
+from sqlalchemy import extract, func, desc 
 from flask_restful import Resource, Api, marshal_with
 from flask_security.decorators import login_required, roles_required
 from flask_security.core import current_user
@@ -248,6 +249,20 @@ class Photo(Resource):
         else:
             raise Conflict
 
+class Archive(Resource):
+
+    def get(self):
+        archives = db.session.query(extract('year', Post.created_time).label('year'), extract('month', Post.created_time).label('month'), func.count('*').label('count')).group_by('year, month').order_by(desc('year, month')).all()
+        return jsonify([ {'year': archive[0], 'month': archive[1], 'count': archive[2]} for archive in archives])
+    
+    
+class ArchiveList(Resource):
+
+    def get(self, year, month):
+        posts = Post.query.filter(extract('year', Post.created_time)==year, extract('month', Post.created_time)==month).all()
+        return jsonify([{'id': post.id, 'title': post.title} for post in posts])
+
+
 
 resources.add_resource(Session, '/sessions')
 resources.add_resource(UserList, '/users')
@@ -256,3 +271,5 @@ resources.add_resource(ArticleList, '/posts')
 resources.add_resource(CommentList, '/comments/<article_id>')
 resources.add_resource(PhotoList, '/photos')
 resources.add_resource(Photo, '/photos/<filename>')
+resources.add_resource(Archive, '/archive')
+resources.add_resource(ArchiveList, '/archives/<year>/<month>')
