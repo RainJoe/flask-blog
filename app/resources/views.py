@@ -253,16 +253,22 @@ class Archive(Resource):
 
     def get(self):
         archives = db.session.query(extract('year', Post.created_time).label('year'), extract('month', Post.created_time).label('month'), func.count('*').label('count')).group_by('year, month').order_by(desc('year, month')).all()
-        return jsonify([ {'year': archive[0], 'month': archive[1], 'count': archive[2]} for archive in archives])
+        data = [] 
+        for archive in archives:
+            archive_post = {}
+
+            archive_post["year"] = archive[0]
+            archive_post["month"] = archive[1]
+            archive_post["count"] = archive[2]
+            
+            posts = Post.query.filter(extract('year', Post.created_time)==archive[0], extract('month', Post.created_time)==archive[1]).all()
+            archive_post["posts"] = [{'id': post.id, 'title': post.title} for post in posts]
+            
+            data.append(archive_post)
+            
+            
+        return jsonify(data)
     
-    
-class ArchiveList(Resource):
-
-    def get(self, year, month):
-        posts = Post.query.filter(extract('year', Post.created_time)==year, extract('month', Post.created_time)==month).all()
-        return jsonify([{'id': post.id, 'title': post.title} for post in posts])
-
-
 
 resources.add_resource(Session, '/sessions')
 resources.add_resource(UserList, '/users')
@@ -272,4 +278,3 @@ resources.add_resource(CommentList, '/comments/<article_id>')
 resources.add_resource(PhotoList, '/photos')
 resources.add_resource(Photo, '/photos/<filename>')
 resources.add_resource(Archive, '/archive')
-resources.add_resource(ArchiveList, '/archives/<year>/<month>')
