@@ -75,7 +75,7 @@ class UserList(Resource):
     @roles_required('admin')
     @marshal_with(user_list_fields)
     def get(self):
-        users = User.query.all()
+        users = User.query.order_by(User.id.desc()).all()
         count = User.query.count()
         return {'users': users, 'count': count}
 
@@ -165,7 +165,7 @@ class ArticleList(Resource):
 
     @marshal_with(article_list_fields)
     def get(self):
-        posts = Post.query.all()
+        posts = Post.query.order_by(Post.id.desc()).all()
         count = Post.query.count()
         return {'count': count, 'posts': [p.to_dict() for p in posts]}
 
@@ -196,7 +196,7 @@ class CommentList(Resource):
         """
         post = Post.query.filter_by(id=article_id).first()
         comments = post.comments.all()
-        return [c.to_dict() for c in comments]
+        return [c.to_dict() for c in comments[::-1]]
 
 
 class PhotoList(Resource):

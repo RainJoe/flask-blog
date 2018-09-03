@@ -34,7 +34,7 @@ class User(db.Model, UserMixin):
     comments = db.relationship('Comment', backref='author', lazy='dynamic')
 
     def avatar(self, size):
-        return 'http://www.gravatar.com/avatar/' + hashlib.md5(
+        return 'https://www.gravatar.com/avatar/' + hashlib.md5(
             self.email.encode('utf-8')).hexdigest() + '?d=retro&s=' + str(size)
 
 
