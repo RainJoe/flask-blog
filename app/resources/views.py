@@ -165,7 +165,7 @@ class ArticleList(Resource):
 
     @marshal_with(article_list_fields)
     def get(self):
-        posts = Post.query.order_by(Post.id.desc()).all()
+        posts = Post.query.order_by(Post.created_time.desc()).all()
         count = Post.query.count()
         return {'count': count, 'posts': [p.to_dict() for p in posts]}
 
