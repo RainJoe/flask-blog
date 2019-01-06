@@ -252,7 +252,7 @@ class Photo(Resource):
 class Archive(Resource):
 
     def get(self):
-        archives = db.session.query(extract('year', Post.created_time).label('year'), extract('month', Post.created_time).label('month'), func.count('*').label('count')).group_by('year, month').order_by(desc('year, month')).all()
+        archives = db.session.query(extract('year', Post.created_time).label('year'), extract('month', Post.created_time).label('month'), func.count('*').label('count')).group_by('year, month').order_by(desc('year'), desc('month')).all()
         data = [] 
         for archive in archives:
             archive_post = {}
@@ -261,7 +261,7 @@ class Archive(Resource):
             archive_post["month"] = archive[1]
             archive_post["count"] = archive[2]
             
-            posts = Post.query.filter(extract('year', Post.created_time)==archive[0], extract('month', Post.created_time)==archive[1]).all()
+            posts = Post.query.filter(extract('year', Post.created_time)==archive[0], extract('month', Post.created_time)==archive[1]).order_by(desc(Post.created_time)).all()
             archive_post["posts"] = [{'id': post.id, 'title': post.title} for post in posts]
             
             data.append(archive_post)
